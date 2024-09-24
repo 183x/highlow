@@ -156,7 +156,7 @@
                 transactionDiv.innerHTML = `
                     <strong>${transaction.date}</strong><br>
                     賭けた金額: ${transaction.betAmount}円<br>
-                    賭けた時の値: ${transaction.startingValue}円<br>
+                    開始値: ${transaction.startingValue}円<br>
                     結果の値: ${transaction.endingValue}円<br>
                     予想: ${transaction.direction === 'up' ? "上" : "下"}<br>
                     差額: ${transaction.difference}円<br>
@@ -197,7 +197,7 @@
     <h1>Fx demonstration tool</h1>
     <p>現在の残高: <span id="balance">1000円</span></p>
     <p>現在の値: <span id="currentValue">151.31円</span></p>
-    <p>賭けたときの値: <span id="startingValue">-</span></p>
+    <p>開始値: <span id="startingValue">-</span></p>
     <p>差額: <span id="difference"></span></p>
     <p>残り時間: <span id="countdown">-</span></p>
 
