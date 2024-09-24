@@ -156,8 +156,8 @@
                 transactionDiv.innerHTML = `
                     <strong>${transaction.date}</strong><br>
                     賭けた金額: ${transaction.betAmount}円<br>
-                    開始値: ${transaction.startingValue}円<br>
-                    結果の値: ${transaction.endingValue}円<br>
+                    開始レート: ${transaction.startingValue}円<br>
+                    最終レート: ${transaction.endingValue}円<br>
                     予想: ${transaction.direction === 'up' ? "上" : "下"}<br>
                     差額: ${transaction.difference}円<br>
                     利益: <span class="${profitColor}">${transaction.profit > 0 ? `+${transaction.profit}円` : `${transaction.profit}円`}</span><br>
@@ -196,16 +196,16 @@
 <body>
     <h1>Fx demonstration tool</h1>
     <p>現在の残高: <span id="balance">1000円</span></p>
-    <p>現在の値: <span id="currentValue">151.31円</span></p>
-    <p>開始値: <span id="startingValue">-</span></p>
+    <p>現在のレート: <span id="currentValue">151.31円</span></p>
+    <p>開始レート: <span id="startingValue">-</span></p>
     <p>差額: <span id="difference"></span></p>
     <p>残り時間: <span id="countdown">-</span></p>
 
     <input type="number" id="betAmount" placeholder="賭ける金額を入力" />
     <br>
     <br>
-    <button id="upBetButton" onclick="placeBet('up')">上がると予測</button>
-    <button id="downBetButton" onclick="placeBet('down')">下がると予測</button>
+    <button id="upBetButton" onclick="placeBet('up')">上(High)</button>
+    <button id="downBetButton" onclick="placeBet('down')">下(Low)</button>
 
     <h2>取引履歴</h2>
     <div id="historyContainer"></div>
