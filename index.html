@@ -144,11 +144,13 @@
             setCookie("transactionHistory", JSON.stringify(transactionHistory), 7);
         }
 
-        // 取引履歴を表示する関数
+        // 取引履歴を表示する関数（直近5件のみ）
         function displayTransactionHistory() {
             const historyContainer = document.getElementById('historyContainer');
             historyContainer.innerHTML = ""; // 現在の内容をクリア
-            transactionHistory.forEach(transaction => {
+            // 直近5件のみ表示
+            const recentTransactions = transactionHistory.slice(0, 5);
+            recentTransactions.forEach(transaction => {
                 const profitColor = transaction.profit > 0 ? "positive" : "negative";
                 const transactionDiv = document.createElement('div');
                 transactionDiv.innerHTML = `
@@ -165,8 +167,8 @@
             });
         }
 
-// 管理者パスワードを確認する関数
-function adminAccess() {
+        // 管理者パスワードを確認する関数
+        function adminAccess() {
             const password = prompt("管理者パスワードを入力してください:");
             if (password === "aruaruaruga") {
                 const newBalance = prompt("新しい残高を設定してください:");
@@ -182,8 +184,6 @@ function adminAccess() {
                 alert("パスワードが間違っています。");
             }
         }
-
-
 
         // ページ読み込み時に残高と取引履歴を表示
         window.onload = function() {
