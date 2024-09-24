@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>残高予測ゲーム</title>
+    <title>Fx demonstration tool</title>
     <style>
         .positive { color: green; }
         .negative { color: red; }
@@ -32,7 +32,7 @@
         }
 
         let balance = Math.floor(parseFloat(getCookie("balance")) || 1000); // 初期残高を1000円（整数）とする
-        let currentValue = 100.00; // 初期値100.00円
+        let currentValue = 151.31; // 初期値100.00円
         let startingValue = null; // 賭けた時の値
         let countdownInterval;
         let directionBet; // 上がるか下がるかの予測を保持
@@ -76,7 +76,7 @@
         function placeBet(direction) {
             let betAmount = parseFloat(document.getElementById('betAmount').value);
             if (isNaN(betAmount) || betAmount <= 0 || betAmount > balance) {
-                alert("有効な賭け金額を入力してください");
+                alert("有効な金額を入力してください");
                 return;
             }
 
@@ -109,7 +109,7 @@
                         // 勝ち
                         profit = Math.floor(betAmount * 2);
                         balance += profit; // 勝ったら残高が2倍（整数）
-                        result = "勝ちました！残高が2倍になりました。";
+                        result = "勝ちました！掛け金が2倍になりました。";
                     } else {
                         // 負け
                         profit = -Math.floor(betAmount);
@@ -154,8 +154,8 @@
                     <strong>${transaction.date}</strong><br>
                     賭けた金額: ${transaction.betAmount}円<br>
                     賭けた時の値: ${transaction.startingValue}円<br>
-                    15秒後の値: ${transaction.endingValue}円<br>
-                    予想した方向: ${transaction.direction === 'up' ? "上" : "下"}<br>
+                    結果の値: ${transaction.endingValue}円<br>
+                    予想: ${transaction.direction === 'up' ? "上" : "下"}<br>
                     差額: ${transaction.difference}円<br>
                     利益: <span class="${profitColor}">${transaction.profit > 0 ? `+${transaction.profit}円` : `${transaction.profit}円`}</span><br>
                     <hr>
@@ -193,9 +193,9 @@ function adminAccess() {
     </script>
 </head>
 <body>
-    <h1>残高予測ゲーム</h1>
+    <h1>Fx demonstration tool</h1>
     <p>現在の残高: <span id="balance">1000円</span></p>
-    <p>現在の値: <span id="currentValue">100.00円</span></p>
+    <p>現在の値: <span id="currentValue">151.31円</span></p>
     <p>賭けたときの値: <span id="startingValue">-</span></p>
     <p>差額: <span id="difference"></span></p>
     <p>残り時間: <span id="countdown">-</span></p>
@@ -208,6 +208,6 @@ function adminAccess() {
 
     <h2>取引履歴</h2>
     <div id="historyContainer"></div>
-    <button onclick="adminAccess()">管理者ボタン</button> <!-- 管理者ボタンの追加 -->
+    <button onclick="adminAccess()">管理者専用</button> <!-- 管理者ボタンの追加 -->
 </body>
 </html>
