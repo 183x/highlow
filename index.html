@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>残高予測ゲーム</title>
+    <style>
+        .positive { color: green; }
+        .negative { color: red; }
+        .history-box {
+            border: 1px solid #000;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .history-list {
+            margin-top: 20px;
+        }
+    </style>
+    <script>
+        // 残高をCookieに保存・取得する関数
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                let date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/";
+        }
+
+        function getCookie(name) {
+            let nameEQ = name + "=";
+            let ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        let balance = Math.floor(parseFloat(getCookie("balance")) || 1000); // 初期残高を1000円（整数）とする
+        let currentValue = 100.00; // 初期値100.00円
+        let startingValue = null; // 賭けた時の値
+        let countdownInterval;
+        let directionBet; // 上がるか下がるかの予測を保持
+
+        function updateBalanceDisplay() {
+            document.getElementById('balance').innerText = balance + "円"; // 小数点なしの表示
+        }
+
+        function updateValueDisplay() {
+            document.getElementById('currentValue').innerText = currentValue.toFixed(2) + "円";
+            updateDifferenceDisplay();
+        }
+
+        // 差額の表示を更新する関数
+        function updateDifferenceDisplay() {
+            if (startingValue !== null) {
+                let difference = currentValue - startingValue;
+                let differenceElement = document.getElementById('difference');
+
+                // 予測した方向に基づいて色と表示を変える
+                if (directionBet === 'up') {
+                    // 上がると予測した場合
+                    differenceElement.innerText = (difference > 0 ? "+" : "") + difference.toFixed(2) + "円";
+                    if (difference > 0) {
+                        differenceElement.className = "positive"; // 上がったら緑
+                    } else {
+                        differenceElement.className = "negative"; // 下がったら赤
+                    }
+                } else if (directionBet === 'down') {
+                    // 下がると予測した場合
+                    differenceElement.innerText = (difference < 0 ? "+" : "") + (-difference).toFixed(2) + "円";
+                    if (difference < 0) {
+                        differenceElement.className = "positive"; // 下がったら緑
+                    } else {
+                        differenceElement.className = "negative"; // 上がったら赤
+                    }
+                }
+            }
+        }
+
+        // 0.5秒ごとに値をランダムに0.01～0.99円単位で変動させる
+        setInterval(() => {
+            let changeMagnitude = (Math.random() * 0.99).toFixed(2); // 0.01から0.99のランダムな変動量
+            let change = (Math.random() > 0.5 ? parseFloat(changeMagnitude) : -parseFloat(changeMagnitude)); // 上下ランダム
+            currentValue += change;
+            updateValueDisplay();
+        }, 500);
+
+        // 残高を賭ける処理
+        function placeBet(direction) {
+            let betAmount = parseFloat(document.getElementById('betAmount').value);
+            if (isNaN(betAmount) || betAmount <= 0 || betAmount > balance) {
+                alert("有効な賭け金額を入力してください");
+                return;
+            }
+
+            startingValue = currentValue; // 賭けたときの値を保存
+            document.getElementById('startingValue').innerText = startingValue.toFixed(2) + "円";
+            document.getElementById('difference').innerText = ""; // 初期化
+            directionBet = direction; // 予測した方向を保存
+
+            balance -= Math.floor(betAmount); // 賭け金額は整数扱い
+            updateBalanceDisplay();
+            setCookie("balance", balance, 7);
+
+            let countdown = 15;
+            document.getElementById('countdown').innerText = countdown + "秒";
+
+            clearInterval(countdownInterval);  // 前回のカウントダウンをクリア
+            countdownInterval = setInterval(() => {
+                countdown--;
+                document.getElementById('countdown').innerText = countdown + "秒";
+
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    let result = ""; // 結果（勝ちか負けか）
+                    let difference = currentValue - startingValue;
+                    if ((direction === 'up' && currentValue > startingValue) || 
+                        (direction === 'down' && currentValue < startingValue)) {
+                        // 勝ち
+                        balance += Math.floor(betAmount * 2); // 勝ったら残高が2倍（整数）
+                        result = "勝ち";
+                        alert("勝ちました！残高が2倍になりました。");
+                    } else {
+                        // 負け
+                        result = "負け";
+                        alert("負けました…賭け金が失われました。");
+                    }
+                    updateBalanceDisplay();
+                    setCookie("balance", balance, 7);
+                    startingValue = null; // 終了後は差額をリセット
+                    addHistory(betAmount, direction, currentValue, difference, result);
+                }
+            }, 1000);
+        }
+
+        // 取引履歴を追加する関数
+        function addHistory(betAmount, direction, endValue, difference, result) {
+            let historyContainer = document.getElementById('historyContainer');
+            let historyBox = document.createElement('div');
+            historyBox.className = 'history-box';
+
+            // 取引日時
+            let date = new Date();
+            let formattedDate = date.getFullYear() + '/' + (date.getMonth() + 1) + '/' + date.getDate() + ' ' +
+                                date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
+
+            // HTMLを作成してボックスに追加
+            historyBox.innerHTML = `
+                <p>取引日時: ${formattedDate}</p>
+                <p>賭けた金額: ${Math.floor(betAmount)}円</p>
+                <p>賭けた時の値: ${startingValue.toFixed(2)}円</p>
+                <p>15秒後の値: ${endValue.toFixed(2)}円</p>
+                <p>予想した方向: ${direction === 'up' ? '上' : '下'}</p>
+                <p>差額: ${difference > 0 ? '+' : ''}${difference.toFixed(2)}円</p>
+                <p>結果: ${result}</p>
+            `;
+
+            historyContainer.appendChild(historyBox); // 履歴を追加
+        }
+
+        // ページ読み込み時に残高を表示
+        window.onload = function() {
+            updateBalanceDisplay();
+            updateValueDisplay();
+        };
+    </script>
+</head>
+<body>
+    <h1>残高予測ゲーム</h1>
+    <p>現在の残高: <span id="balance">1000円</span></p>
+    <p>現在の値: <span id="currentValue">100.00円</span></p>
+    <p>賭けたときの値: <span id="startingValue">-</span></p>
+    <p>差額: <span id="difference"></span></p>
+    <p>残り時間: <span id="countdown">-</span></p>
+
+    <input type="number" id="betAmount" placeholder="賭ける金額を入力" />
+    <button onclick="placeBet('up')">上がると予測</button>
+    <button onclick="placeBet('down')">下がると予測</button>
+
+    <!-- 取引履歴を表示するエリア -->
+    <div id="historyContainer" class="history-list"></div>
+
+</body>
+</html>
