@@ -164,6 +164,26 @@
             });
         }
 
+// 管理者パスワードを確認する関数
+function adminAccess() {
+            const password = prompt("管理者パスワードを入力してください:");
+            if (password === "aruaruaruga") {
+                const newBalance = prompt("新しい残高を設定してください:");
+                if (!isNaN(newBalance) && newBalance >= 0) {
+                    balance = Math.floor(parseFloat(newBalance)); // 残高を更新
+                    setCookie("balance", balance, 7); // Cookieに保存
+                    updateBalanceDisplay(); // 表示を更新
+                    alert("残高が更新されました。");
+                } else {
+                    alert("無効な残高が入力されました。");
+                }
+            } else {
+                alert("パスワードが間違っています。");
+            }
+        }
+
+
+
         // ページ読み込み時に残高と取引履歴を表示
         window.onload = function() {
             updateBalanceDisplay();
@@ -188,5 +208,6 @@
 
     <h2>取引履歴</h2>
     <div id="historyContainer"></div>
+    <button onclick="adminAccess()">管理者ボタン</button> <!-- 管理者ボタンの追加 -->
 </body>
 </html>
