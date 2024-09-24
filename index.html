@@ -8,6 +8,29 @@
     <style>
         .positive { color: green; }
         .negative { color: red; }
+         /* ボタンのスタイルを追加 */
+        #upBetButton {
+            background-color: red; /* 赤色 */
+            color: white; /* 文字色は白 */
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        #downBetButton {
+            background-color: blue; /* 青色 */
+            color: white; /* 文字色は白 */
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        /* ボタンにホバー効果を追加 */
+        button:hover {
+            opacity: 0.9;
+        }
     </style>
     <script>
         // 残高をCookieに保存・取得する関数
