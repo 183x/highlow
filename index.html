@@ -8,7 +8,7 @@
     <style>
         .positive { color: green; }
         .negative { color: red; }
-         /* ボタンのスタイルを追加 */
+        /* ボタンのスタイルを追加 */
         #upBetButton {
             background-color: red; /* 赤色 */
             color: white; /* 文字色は白 */
@@ -30,6 +30,13 @@
         /* ボタンにホバー効果を追加 */
         button:hover {
             opacity: 0.9;
+        }
+        /* チャートのスタイル */
+        #chartContainer {
+            width: 100%;
+            height: 200px;
+            margin-top: 20px;
+            border: 1px solid #ccc;
         }
     </style>
     <script>
@@ -61,6 +68,10 @@
         let countdownInterval;
         let directionBet; // 上がるか下がるかの予測を保持
         let transactionHistory = JSON.parse(getCookie("transactionHistory") || "[]"); // 取引履歴の取得
+        
+        // チャート用変数
+        const chartData = [];
+        const maxDataPoints = 20; // 最大データポイント数 (10秒間の更新)
 
         function updateBalanceDisplay() {
             document.getElementById('balance').innerText = balance + "円"; // 小数点なしの表示
@@ -93,6 +104,14 @@
             let changeMagnitude = (Math.random() * 0.99).toFixed(2); // 0.01から0.99のランダムな変動量
             let change = (Math.random() > 0.5 ? parseFloat(changeMagnitude) : -parseFloat(changeMagnitude)); // 上下ランダム
             currentValue += change;
+
+            // チャートデータを更新
+            if (chartData.length >= maxDataPoints) {
+                chartData.shift(); // 最古のデータを削除
+            }
+            chartData.push(currentValue);
+            updateChart();
+
             updateValueDisplay();
         }, 500);
 
@@ -208,11 +227,41 @@
             }
         }
 
+        // チャートを更新する関数
+        function updateChart() {
+            const canvas = document.getElementById('chartCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // 描画のクリア
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // チャートの設定
+            const width = canvas.width;
+            const height = canvas.height;
+            const step = width / maxDataPoints;
+
+            // チャートの描画
+            ctx.beginPath();
+            ctx.moveTo(0, height - (chartData[0] - 140) * 10); // 150を基準にスケーリング
+
+            chartData.forEach((value, index) => {
+                const x = index * step;
+                const y = height - (value - 140) * 10; // 150を基準にスケーリング
+                ctx.lineTo(x, y);
+            });
+
+            ctx.strokeStyle = 'blue';
+            ctx.stroke();
+        }
+
         // ページ読み込み時に残高と取引履歴を表示
         window.onload = function() {
             updateBalanceDisplay();
             updateValueDisplay();
             displayTransactionHistory();
+            const canvas = document.getElementById('chartCanvas');
+            canvas.width = document.getElementById('chartContainer').clientWidth; // チャートの幅を設定
+            canvas.height = 200; // チャートの高さを設定
         };
     </script>
 </head>
@@ -220,6 +269,9 @@
     <h1>Fx demonstration tool</h1>
     <p>現在の残高: <span id="balance">1000円</span></p>
     <p>現在のレート: <span id="currentValue">151.31円</span></p>
+    <div id="chartContainer">
+        <canvas id="chartCanvas"></canvas>
+    </div>
     <p>開始レート: <span id="startingValue">-</span></p>
     <p>差額: <span id="difference"></span></p>
     <p>残り時間: <span id="countdown">-</span></p>
@@ -233,5 +285,7 @@
     <h2>取引履歴</h2>
     <div id="historyContainer"></div>
     <button onclick="adminAccess()">管理者専用</button> <!-- 管理者ボタンの追加 -->
+
+    
 </body>
 </html>
