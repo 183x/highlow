@@ -36,7 +36,7 @@
         let startingValue = null; // 賭けた時の値
         let countdownInterval;
         let directionBet; // 上がるか下がるかの予測を保持
-        let transactionHistory = []; // 取引履歴を格納する配列
+        let transactionHistory = JSON.parse(getCookie("transactionHistory") || "[]"); // 取引履歴の取得
 
         function updateBalanceDisplay() {
             document.getElementById('balance').innerText = balance + "円"; // 小数点なしの表示
@@ -55,62 +55,22 @@
 
                 // 予測した方向に基づいて色と表示を変える
                 if (directionBet === 'up') {
-                    // 上がると予測した場合
                     differenceElement.innerText = (difference > 0 ? "+" : "") + difference.toFixed(2) + "円";
-                    if (difference > 0) {
-                        differenceElement.className = "positive"; // 上がったら緑
-                    } else {
-                        differenceElement.className = "negative"; // 下がったら赤
-                    }
+                    differenceElement.className = difference > 0 ? "positive" : "negative"; // 上がったら緑、下がったら赤
                 } else if (directionBet === 'down') {
-                    // 下がると予測した場合
                     differenceElement.innerText = (difference < 0 ? "+" : "") + (-difference).toFixed(2) + "円";
-                    if (difference < 0) {
-                        differenceElement.className = "positive"; // 下がったら緑
-                    } else {
-                        differenceElement.className = "negative"; // 上がったら赤
-                    }
+                    differenceElement.className = difference < 0 ? "positive" : "negative"; // 下がったら緑、上がったら赤
                 }
             }
         }
 
-        // 0.5秒ごとに値をランダムに0.01～0.99円単位で変動させる
+        // 0.5秒ごとに値をランダムに変動させる
         setInterval(() => {
             let changeMagnitude = (Math.random() * 0.99).toFixed(2); // 0.01から0.99のランダムな変動量
             let change = (Math.random() > 0.5 ? parseFloat(changeMagnitude) : -parseFloat(changeMagnitude)); // 上下ランダム
             currentValue += change;
             updateValueDisplay();
         }, 500);
-
-        // 取引履歴を更新する関数
-        function updateTransactionHistory() {
-            const historyContainer = document.getElementById('historyContainer');
-            historyContainer.innerHTML = ""; // 初期化
-
-            // 取引履歴を最新のものが上に来るように逆順で表示
-            transactionHistory.forEach(transaction => {
-                const transactionDiv = document.createElement('div');
-                transactionDiv.style.border = '1px solid #ccc';
-                transactionDiv.style.padding = '10px';
-                transactionDiv.style.marginBottom = '5px';
-
-                // 利益の計算
-                let profit = transaction.result === "勝ち" ? transaction.amount * 2 : -transaction.amount;
-                let profitColor = transaction.result === "勝ち" ? "positive" : "negative";
-
-                transactionDiv.innerHTML = `
-                    <strong>取引日時:</strong> ${transaction.date}<br>
-                    <strong>賭けた金額:</strong> ${transaction.amount}円<br>
-                    <strong>賭けた時の値:</strong> ${transaction.startingValue.toFixed(2)}円<br>
-                    <strong>15秒後の値:</strong> ${currentValue.toFixed(2)}円<br>
-                    <strong>予想した方向:</strong> ${transaction.direction === 'up' ? '上' : '下'}<br>
-                    <strong>差額:</strong> <span class="${profitColor}">${transaction.difference.toFixed(2)}円</span><br>
-                    <strong>利益:</strong> <span class="${profitColor}">${profit > 0 ? '+' : ''}${profit}円</span><br>
-                    <strong>結果:</strong> ${transaction.result}<br>
-                `;
-                historyContainer.prepend(transactionDiv); // 最新の取引を上に表示
-            });
-        }
 
         // 残高を賭ける処理
         function placeBet(direction) {
@@ -120,9 +80,6 @@
                 return;
             }
 
-            // ボタンを無効化
-            document.querySelectorAll("button").forEach(btn => btn.disabled = true);
-
             startingValue = currentValue; // 賭けたときの値を保存
             document.getElementById('startingValue').innerText = startingValue.toFixed(2) + "円";
             document.getElementById('difference').innerText = ""; // 初期化
@@ -131,6 +88,9 @@
             balance -= Math.floor(betAmount); // 賭け金額は整数扱い
             updateBalanceDisplay();
             setCookie("balance", balance, 7);
+
+            // ボタンを無効化
+            document.querySelectorAll('button').forEach(button => button.disabled = true);
 
             let countdown = 15;
             document.getElementById('countdown').innerText = countdown + "秒";
@@ -142,45 +102,73 @@
 
                 if (countdown <= 0) {
                     clearInterval(countdownInterval);
+                    let result, profit;
                     // 結果を判定
-                    let result;
                     if ((direction === 'up' && currentValue > startingValue) || 
                         (direction === 'down' && currentValue < startingValue)) {
                         // 勝ち
-                        balance += Math.floor(betAmount * 2); // 勝ったら残高が2倍（整数）
-                        alert("勝ちました！残高が2倍になりました。");
-                        result = "勝ち";
+                        profit = Math.floor(betAmount * 2);
+                        balance += profit; // 勝ったら残高が2倍（整数）
+                        result = "勝ちました！残高が2倍になりました。";
                     } else {
                         // 負け
-                        alert("負けました…賭け金が失われました。");
-                        result = "負け";
+                        profit = -Math.floor(betAmount);
+                        result = "負けました…賭け金が失われました。";
                     }
-
-                    // 取引履歴の更新
-                    transactionHistory.unshift({
-                        date: new Date().toLocaleString(),
-                        amount: Math.floor(betAmount),
-                        startingValue: startingValue,
-                        direction: direction,
-                        difference: currentValue - startingValue,
-                        result: result,
-                    });
-                    updateTransactionHistory();
-
+                    alert(result);
                     updateBalanceDisplay();
                     setCookie("balance", balance, 7);
+                    recordTransaction(betAmount, startingValue, currentValue, direction, profit);
+                    displayTransactionHistory();
                     startingValue = null; // 終了後は差額をリセット
 
                     // ボタンを再度有効化
-                    document.querySelectorAll("button").forEach(btn => btn.disabled = false);
+                    document.querySelectorAll('button').forEach(button => button.disabled = false);
                 }
             }, 1000);
         }
 
-        // ページ読み込み時に残高を表示
+        // 取引を記録し、Cookieに保存する関数
+        function recordTransaction(betAmount, startingValue, endingValue, direction, profit) {
+            const transaction = {
+                date: new Date().toLocaleString(),
+                betAmount: Math.floor(betAmount),
+                startingValue: startingValue.toFixed(2),
+                endingValue: endingValue.toFixed(2),
+                direction: direction,
+                difference: (endingValue - startingValue).toFixed(2),
+                profit: profit
+            };
+            transactionHistory.unshift(transaction); // 新しい取引を先頭に追加
+            setCookie("transactionHistory", JSON.stringify(transactionHistory), 7);
+        }
+
+        // 取引履歴を表示する関数
+        function displayTransactionHistory() {
+            const historyContainer = document.getElementById('historyContainer');
+            historyContainer.innerHTML = ""; // 現在の内容をクリア
+            transactionHistory.forEach(transaction => {
+                const profitColor = transaction.profit > 0 ? "positive" : "negative";
+                const transactionDiv = document.createElement('div');
+                transactionDiv.innerHTML = `
+                    <strong>${transaction.date}</strong><br>
+                    賭けた金額: ${transaction.betAmount}円<br>
+                    賭けた時の値: ${transaction.startingValue}円<br>
+                    15秒後の値: ${transaction.endingValue}円<br>
+                    予想した方向: ${transaction.direction === 'up' ? "上" : "下"}<br>
+                    差額: ${transaction.difference}円<br>
+                    利益: <span class="${profitColor}">${transaction.profit > 0 ? `+${transaction.profit}円` : `${transaction.profit}円`}</span><br>
+                    <hr>
+                `;
+                historyContainer.appendChild(transactionDiv);
+            });
+        }
+
+        // ページ読み込み時に残高と取引履歴を表示
         window.onload = function() {
             updateBalanceDisplay();
             updateValueDisplay();
+            displayTransactionHistory();
         };
     </script>
 </head>
@@ -193,8 +181,8 @@
     <p>残り時間: <span id="countdown">-</span></p>
 
     <input type="number" id="betAmount" placeholder="賭ける金額を入力" />
-    <button onclick="placeBet('up')">上がると予測</button>
-    <button onclick="placeBet('down')">下がると予測</button>
+    <button id="upBetButton" onclick="placeBet('up')">上がると予測</button>
+    <button id="downBetButton" onclick="placeBet('down')">下がると予測</button>
 
     <h2>取引履歴</h2>
     <div id="historyContainer"></div>
