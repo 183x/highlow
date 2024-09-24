@@ -86,6 +86,8 @@
         function updateTransactionHistory() {
             const historyContainer = document.getElementById('historyContainer');
             historyContainer.innerHTML = ""; // 初期化
+
+            // 取引履歴を最新のものが上に来るように逆順で表示
             transactionHistory.forEach(transaction => {
                 const transactionDiv = document.createElement('div');
                 transactionDiv.style.border = '1px solid #ccc';
@@ -106,7 +108,7 @@
                     <strong>利益:</strong> <span class="${profitColor}">${profit > 0 ? '+' : ''}${profit}円</span><br>
                     <strong>結果:</strong> ${transaction.result}<br>
                 `;
-                historyContainer.insertBefore(transactionDiv, historyContainer.firstChild); // 最新の取引を上に表示
+                historyContainer.prepend(transactionDiv); // 最新の取引を上に表示
             });
         }
 
@@ -117,6 +119,9 @@
                 alert("有効な賭け金額を入力してください");
                 return;
             }
+
+            // ボタンを無効化
+            document.querySelectorAll("button").forEach(btn => btn.disabled = true);
 
             startingValue = currentValue; // 賭けたときの値を保存
             document.getElementById('startingValue').innerText = startingValue.toFixed(2) + "円";
@@ -165,6 +170,9 @@
                     updateBalanceDisplay();
                     setCookie("balance", balance, 7);
                     startingValue = null; // 終了後は差額をリセット
+
+                    // ボタンを再度有効化
+                    document.querySelectorAll("button").forEach(btn => btn.disabled = false);
                 }
             }, 1000);
         }
